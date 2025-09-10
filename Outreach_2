@@ -25,7 +25,7 @@ import openpyxl
 # --- CONFIG ---
 OUTPUT_FILE = "contacts.xlsx"
 STATE_FILE = "scraper_state.pkl"
-
+MAX_PAGES = 2000  
 # Contact-related keywords for URL filtering (can be customized per industry)
 URL_KEYWORDS = ["contact", "team", "people", "staff", "directory", "about-us"]
 
