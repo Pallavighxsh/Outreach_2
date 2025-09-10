@@ -70,7 +70,9 @@ Python libraries needed:
 
 ⚙️ How to Run  
 
-- Define the seed websites you want to start crawling from inside the script. (SEED_URLS =)  
+- Define the seed websites you want to start crawling from inside the script. (SEED_URLS =)
+
+- Adjust the URL_KEYWORDS = ["contact", "team", "people", "staff", "directory", "about-us"] as per your needs.
 
 - Install the required packages.  
 
