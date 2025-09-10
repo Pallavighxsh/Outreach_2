@@ -1,16 +1,10 @@
 # Outreach_2 
 
-Building on my earlier CLI tool Outreach, this enhanced version goes beyond just collecting names and emails.  
-
-While the previous release is useful if you only need basic contact details, this updated version provides a more comprehensive scrape with richer information.  
+Building on my earlier CLI tool Outreach, this enhanced version goes beyond just collecting names and emails. While the previous release is useful if you only need basic contact details, this updated version provides a more comprehensive scrape with richer information.  
 
 A Selenium + BeautifulSoup powered crawler for discovering and scraping contact information (emails, phone numbers, names, and roles) from organizational websites.  
 
-DISCLAIMER: DO NOT USE THIS FOR THE PURPOSE OF SPAMMING.  
-
-THE INTENTION OF THIS TOOL IS TO HELP DIGITAL MARKETERS.  
-
-SPAMMERS, BE GONE!  
+DISCLAIMER: DO NOT USE THIS FOR THE PURPOSE OF SPAMMING. THE INTENTION OF THIS TOOL IS TO HELP DIGITAL MARKETERS. SPAMMERS, BE GONE!  
 
 ---
 
@@ -40,11 +34,11 @@ SPAMMERS, BE GONE!
 
 🛠️ Setup  
 
-It is strongly recommended to use a Python virtual environment when running this project.  
+- It is strongly recommended to use a Python virtual environment when running this project.  
 
-This keeps dependencies isolated and avoids version conflicts across projects.  
+- This keeps dependencies isolated and avoids version conflicts across projects.  
 
-Once the environment is created and activated, install the dependencies:  
+- Once the environment is created and activated, install the dependencies:  
 
 ---
 
@@ -86,15 +80,9 @@ Python libraries needed:
 
 ⏸️ Resume Functionality (Highly Recommended)  
 
-This scraper saves its progress to a file.  
+This scraper saves its progress to a file. If you stop the program with Ctrl+C, it will store the list of pages already visited and any contacts found so far. When you restart, the crawler will resume from the saved state, instead of starting over.  
 
-If you stop the program with Ctrl+C, it will store the list of pages already visited and any contacts found so far.  
-
-When you restart, the crawler will resume from the saved state, instead of starting over.  
-
-This feature is not just convenient — it is recommended for safety.  
-
-Sending too many requests to a site in one go can trigger rate-limiting or even temporary IP blocking.  
+--- This feature is not just convenient but it is recommended for safety. Sending too many requests to a site in one go can trigger rate-limiting or even temporary IP blocking.  ---- 
 
 By using the resume functionality, you can:  
 
