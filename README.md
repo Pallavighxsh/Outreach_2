@@ -1,4 +1,4 @@
-# Outreach_part_two  
+# Outreach_2 
 
 Building on my earlier CLI tool Outreach, this enhanced version goes beyond just collecting names and emails.  
 
