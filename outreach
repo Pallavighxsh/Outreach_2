@@ -1,151 +1,84 @@
-"""
+import nltk
+from nltk import word_tokenize, pos_tag
+from nltk.corpus import stopwords
 
-Key features:
-- Starts from seed URLs and crawls subpages
-- Collects links containing contact-related keywords
-- Scrapes emails, phone numbers, names, designations -- check the README.md file for how to customize
-- Saves results to Excel
-- Supports safe resume after Ctrl+C
-"""
+nltk.download("punkt")
+nltk.download("averaged_perceptron_tagger")
+nltk.download("stopwords")
 
-import os
-import re
-import time
-import random
-import pickle
-from collections import deque
-from urllib.parse import urlparse, urljoin
+STOPWORDS = set(stopwords.words("english"))
 
-from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-import openpyxl
+def extract_proper_nouns(body_text):
+    """Return all NNP/NNPS tokens."""
+    tokens = word_tokenize(body_text)
+    tagged = pos_tag(tokens)
 
-# --- CONFIG ---
-OUTPUT_FILE = "contacts.xlsx"
-STATE_FILE = "scraper_state.pkl"
-MAX_PAGES = 2000  
-# Contact-related keywords for URL filtering (can be customized per industry)
-URL_KEYWORDS = ["contact", "team", "people", "staff", "directory", "about-us"]
+    proper_nouns = [word for word, tag in tagged if tag in ("NNP", "NNPS")]
+    return proper_nouns
 
-# Seed URLs (edit as needed)
-SEED_URLS = [
-    "https://www.example.com",
-]
 
-# --- Helper functions ---
-def normalize_url(base_url, link):
-    return urljoin(base_url, link)
+def extract_names_nltk(body_text):
+    """Extract 2-word Proper Noun sequences (names)."""
+    tokens = word_tokenize(body_text)
+    tagged = pos_tag(tokens)
 
-def is_valid_url(url):
-    parsed = urlparse(url)
-    return parsed.scheme in ("http", "https")
+    names = []
+    for i in range(len(tagged) - 1):
+        if tagged[i][1] == "NNP" and tagged[i+1][1] == "NNP":
+            names.append(f"{tagged[i][0]} {tagged[i+1][0]}")
+
+    return list(set(names))
+
+
+def extract_buzzwords_from_nouns(proper_nouns, names):
+    """
+    Buzzwords = All Proper Nouns - Names - Stopwords - Junk
+    """
+    name_parts = set()
+    for n in names:
+        for part in n.split():
+            name_parts.add(part)
+
+    buzz = []
+    for word in proper_nouns:
+        # remove name components
+        if word in name_parts:
+            continue
+
+        # skip trivial words
+        if word.lower() in STOPWORDS:
+            continue
+
+        if len(word) <= 2:
+            continue
+
+        # keep only alphabetic or mixed-case words (skip numbers)
+        if not any(c.isalpha() for c in word):
+            continue
+
+        buzz.append(word)
+
+    return list(set(buzz))
+
 
 def extract_contact_info(body_text):
-    """Regex-based extraction of key contact fields from page text"""
+    """Emails + NLTK names + NLTK-derived buzzwords"""
     data = {}
 
     # Emails
-    email_match = re.findall(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", body_text)
-    data["emails"] = list(set(email_match))
+    emails = re.findall(
+        r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+        body_text
+    )
+    data["emails"] = list(set(emails))
 
-    # Phone numbers (basic international formats)
-    phone_match = re.findall(r"\+?\d[\d\s\-]{7,}\d", body_text)
-    data["phones"] = list(set(phone_match))
+    # Names (full 2-word proper noun sequences)
+    names = extract_names_nltk(body_text)
+    data["names"] = names
 
-    # Names (very rough heuristic – capitalized words, tweak if needed)
-    name_match = re.findall(r"\b[A-Z][a-z]+ [A-Z][a-z]+\b", body_text)
-    data["names"] = list(set(name_match))
-
-    # Designations / roles (simple keyword matching)
-    roles = []
-    for role in ["Manager", "Director", "Executive", "CTO", "Professor", "Coordinator", "Engineer"]:
-        if role.lower() in body_text.lower():
-            roles.append(role)
-    data["roles"] = list(set(roles))
+    # Buzzwords (auto-discovered)
+    proper_nouns = extract_proper_nouns(body_text)
+    buzzwords = extract_buzzwords_from_nouns(proper_nouns, names)
+    data["buzzwords"] = buzzwords
 
     return data
-
-# --- Main scraper ---
-def scrape_contacts():
-    # Selenium setup
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-
-    # Resume or start fresh
-    if os.path.exists(STATE_FILE):
-        print("[INFO] Resuming crawl from saved state...")
-        with open(STATE_FILE, "rb") as f:
-            state = pickle.load(f)
-        to_visit, visited, contact_pages, results = state
-    else:
-        print("[INFO] Starting fresh crawl...")
-        to_visit = deque(SEED_URLS)
-        visited = set()
-        contact_pages = set()
-        results = []
-
-    try:
-        while to_visit:
-            url = to_visit.popleft()
-            if url in visited:
-                continue
-            visited.add(url)
-
-            try:
-                driver.get(url)
-                time.sleep(random.uniform(1, 3))  # polite delay
-                soup = BeautifulSoup(driver.page_source, "html.parser")
-                body_text = soup.get_text(separator=" ", strip=True)
-
-                # Check if URL looks like a "contact/team/staff" page
-                if any(keyword in url.lower() for keyword in URL_KEYWORDS):
-                    info = extract_contact_info(body_text)
-                    results.append({"url": url, **info})
-                    contact_pages.add(url)
-
-                # Enqueue new links
-                for link_tag in soup.find_all("a", href=True):
-                    link = normalize_url(url, link_tag["href"])
-                    if is_valid_url(link) and urlparse(link).netloc == urlparse(url).netloc:
-                        if link not in visited:
-                            to_visit.append(link)
-
-                if len(visited) % 25 == 0:
-                    print(f"Visited {len(visited)} pages — found {len(contact_pages)} contact pages...")
-
-            except Exception as e:
-                print(f"[WARN] Failed to process {url}: {e}")
-
-    except KeyboardInterrupt:
-        print("\n[INFO] Interrupted by user — saving state and partial results...")
-
-    finally:
-        driver.quit()
-
-        # Save state for resume
-        with open(STATE_FILE, "wb") as f:
-            pickle.dump((to_visit, visited, contact_pages, results), f)
-
-        # Save results to Excel
-        if results:
-            wb = openpyxl.Workbook()
-            ws = wb.active
-            ws.append(["URL", "Emails", "Phones", "Names", "Roles"])
-            for r in results:
-                ws.append([
-                    r.get("url"),
-                    ", ".join(r.get("emails", [])),
-                    ", ".join(r.get("phones", [])),
-                    ", ".join(r.get("names", [])),
-                    ", ".join(r.get("roles", []))
-                ])
-            wb.save(OUTPUT_FILE)
-            print(f"[INFO] Saved {len(results)} rows to {OUTPUT_FILE}")
-        else:
-            print("[INFO] No results found to save.")
-
-if __name__ == "__main__":
-    scrape_contacts()
