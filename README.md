@@ -1,8 +1,8 @@
 # Outreach CLI Tool
 
-A Selenium + BeautifulSoup powered crawler for discovering and scraping contact information (emails, phone numbers, names, and roles) from organizational websites.  
+A Selenium + BeautifulSoup powered crawler for discovering and scraping contact information (emails, names, and industry buzzwords / seo keywords ) from organizational websites.  
 
-DISCLAIMER: DO NOT USE THIS FOR THE PURPOSE OF SPAMMING. THE INTENTION OF THIS TOOL IS TO HELP DIGITAL MARKETERS. SPAMMERS, BE GONE!  
+DISCLAIMER: Please don't use this to be a spammer... Find organic connections!
 
 ---
 
@@ -18,11 +18,9 @@ DISCLAIMER: DO NOT USE THIS FOR THE PURPOSE OF SPAMMING. THE INTENTION OF THIS T
 
   - Email addresses  
 
-  - Phone numbers  
-
   - Names (where available)  
 
-  - Roles or designations (e.g., Manager, Director, Engineer, Faculty)  
+  - Industry buzzwords / seo keywords 
 
   - Saves results into a clean Excel file for easy use.  
 
@@ -114,11 +112,9 @@ Each row includes:
 
 - Emails detected.  
 
-- Phone numbers detected.  
-
 - Names found (where identifiable).  
 
-- Roles or designations mentioned.  
+- Industry buzzwords / seo keywords 
 
 ---
 
